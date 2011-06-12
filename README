@@ -1,0 +1,6 @@
+Eclipse has a mechanism to notify its user about available updates of the installed plug-in. However, some users may still not notice this notification as it appears as a small icon in the bottom right corner of Eclipse. Besides, the Eclipse notification system checks for available updates for all of the installed plug-ins.
+
+This repository contains an example Eclipse plug-in to show how to check for the availability of updates for a specific plug-in at the start up of Eclipse and let the users update the plug-in if new releases are available.  
+
+This project is open source and released under the Illinois/NCSA Open Source License. See LICENSE.TXT for more details.
+
