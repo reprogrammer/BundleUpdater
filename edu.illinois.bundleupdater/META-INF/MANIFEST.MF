@@ -1,0 +1,10 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: edu.illinois.bundleupdater
+Bundle-SymbolicName: edu.illinois.bundleupdater
+Bundle-Version: 1.0.0.qualifier
+Bundle-Activator: edu.illinois.bundleupdater.Activator
+Bundle-Vendor: University of Illinois
+Require-Bundle: org.eclipse.core.runtime
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-ActivationPolicy: lazy

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<site>
+   <category-def name="Bundle Updater" label="Bundle Updater">
+      <description>
+         This bundle installs all the plug-ins required to demonstrate automatic update in Eclipse.
+      </description>
+   </category-def>
+</site>
