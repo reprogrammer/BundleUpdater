@@ -1,5 +1,5 @@
-EclipseUpdater Release License
-==============================
+BundleUpdater Release License
+=============================
  
 University of Illinois/NCSA Open Source License
  
