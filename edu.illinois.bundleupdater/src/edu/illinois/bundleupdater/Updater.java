@@ -5,6 +5,7 @@ package edu.illinois.bundleupdater;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.Collection;
 
 import org.eclipse.core.runtime.IStatus;
@@ -12,9 +13,12 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.equinox.p2.core.IProvisioningAgent;
 import org.eclipse.equinox.p2.core.IProvisioningAgentProvider;
 import org.eclipse.equinox.p2.core.ProvisionException;
+import org.eclipse.equinox.p2.engine.IProfile;
+import org.eclipse.equinox.p2.engine.IProfileRegistry;
 import org.eclipse.equinox.p2.metadata.IInstallableUnit;
 import org.eclipse.equinox.p2.operations.ProvisioningSession;
 import org.eclipse.equinox.p2.operations.UpdateOperation;
+import org.eclipse.equinox.p2.query.IQuery;
 import org.eclipse.equinox.p2.query.QueryUtil;
 import org.eclipse.equinox.p2.repository.artifact.IArtifactRepositoryManager;
 import org.eclipse.equinox.p2.repository.metadata.IMetadataRepository;
@@ -63,17 +67,29 @@ public class Updater implements IStartup {
 					.loadRepository(getUpdateSiteURI(),
 							new NullProgressMonitor());
 
-			Collection<IInstallableUnit> iusToUpdate = metadataRepository
+			IProfileRegistry registry = (IProfileRegistry) agent
+					.getService(IProfileRegistry.SERVICE_NAME);
+
+			System.err.println("profiles="
+					+ Arrays.toString(registry.getProfiles()));
+
+			IProfile profile = registry.getProfile(IProfileRegistry.SELF);
+
+			System.out.println("self profile=" + profile);
+
+			Collection<IInstallableUnit> metadataIUs = metadataRepository
 					.query(QueryUtil.createLatestIUQuery(),
 							new NullProgressMonitor()).toUnmodifiableSet();
 
+			System.err.println("metadataIUs=" + metadataIUs);
+
+			IQuery<IInstallableUnit> query = QueryUtil
+					.createIUQuery(Activator.PLUGIN_ID
+							+ ".feature.feature.group");
+			Collection<IInstallableUnit> iusToUpdate = profile.query(query,
+					null).toUnmodifiableSet();
+
 			System.err.println("iusToUpdate=" + iusToUpdate);
-
-			// The following operation object works for updating all installed
-			// plug-ins.
-
-			// final UpdateOperation updateOperation = new UpdateOperation(
-			// new ProvisioningSession(agent));
 
 			final UpdateOperation updateOperation = new UpdateOperation(
 					new ProvisioningSession(agent), iusToUpdate);
@@ -81,6 +97,7 @@ public class Updater implements IStartup {
 			IStatus modalResolution = updateOperation
 					.resolveModal(new NullProgressMonitor());
 
+			Activator.getDefault().log(modalResolution);
 			System.err.println("modalResolution=" + modalResolution.toString());
 
 			if (modalResolution.isOK()) {

@@ -3,6 +3,7 @@
  */
 package edu.illinois.bundleupdater;
 
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Plugin;
 import org.eclipse.core.runtime.Status;
 import org.osgi.framework.BundleContext;
@@ -46,8 +47,12 @@ public class Activator extends Plugin {
 		return plugin;
 	}
 
+	public void log(IStatus status) {
+		getLog().log(status);
+	}
+
 	public void logErrorStatus(String message, Exception e) {
-		getLog().log(new Status(Status.ERROR, PLUGIN_ID, message, e));
+		log(new Status(Status.ERROR, PLUGIN_ID, message, e));
 	}
 
 }
