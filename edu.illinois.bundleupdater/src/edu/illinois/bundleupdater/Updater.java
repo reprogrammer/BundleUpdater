@@ -8,6 +8,11 @@ import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Collection;
 
+import org.eclipse.core.commands.Command;
+import org.eclipse.core.commands.ExecutionException;
+import org.eclipse.core.commands.NotEnabledException;
+import org.eclipse.core.commands.NotHandledException;
+import org.eclipse.core.commands.common.NotDefinedException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.equinox.p2.core.IProvisioningAgent;
@@ -23,9 +28,12 @@ import org.eclipse.equinox.p2.query.QueryUtil;
 import org.eclipse.equinox.p2.repository.artifact.IArtifactRepositoryManager;
 import org.eclipse.equinox.p2.repository.metadata.IMetadataRepository;
 import org.eclipse.equinox.p2.repository.metadata.IMetadataRepositoryManager;
-import org.eclipse.equinox.p2.ui.ProvisioningUI;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Event;
 import org.eclipse.ui.IStartup;
+import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.commands.ICommandService;
+import org.eclipse.ui.handlers.IHandlerService;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
 
@@ -67,13 +75,13 @@ public class Updater implements IStartup {
 					.loadRepository(getUpdateSiteURI(),
 							new NullProgressMonitor());
 
-			IProfileRegistry registry = (IProfileRegistry) agent
+			final IProfileRegistry registry = (IProfileRegistry) agent
 					.getService(IProfileRegistry.SERVICE_NAME);
 
 			System.err.println("profiles="
 					+ Arrays.toString(registry.getProfiles()));
 
-			IProfile profile = registry.getProfile(IProfileRegistry.SELF);
+			final IProfile profile = registry.getProfile(IProfileRegistry.SELF);
 
 			System.out.println("self profile=" + profile);
 
@@ -91,8 +99,11 @@ public class Updater implements IStartup {
 
 			System.err.println("iusToUpdate=" + iusToUpdate);
 
+			ProvisioningSession provisioningSession = new ProvisioningSession(
+					agent);
+
 			final UpdateOperation updateOperation = new UpdateOperation(
-					new ProvisioningSession(agent), iusToUpdate);
+					provisioningSession, iusToUpdate);
 
 			IStatus modalResolution = updateOperation
 					.resolveModal(new NullProgressMonitor());
@@ -100,13 +111,20 @@ public class Updater implements IStartup {
 			Activator.getDefault().log(modalResolution);
 			System.err.println("modalResolution=" + modalResolution.toString());
 
+			boolean profileHasScheduledOperations = provisioningSession
+					.hasScheduledOperationsFor(profile.getProfileId());
+
+			System.out.println("Profile "
+					+ (profileHasScheduledOperations ? "has" : "does not have")
+					+ " scheduled operation jobs.");
 			if (modalResolution.isOK()) {
-				Display.getDefault().asyncExec(new Runnable() {
+				Display.getDefault().syncExec(new Runnable() {
 
 					@Override
 					public void run() {
-						ProvisioningUI.getDefaultUI().openUpdateWizard(false,
-								updateOperation, null);
+						runCommand("org.eclipse.equinox.p2.ui.sdk.update",
+								"Failed to open the check for updates dialog",
+								null);
 					}
 				});
 
@@ -114,6 +132,29 @@ public class Updater implements IStartup {
 		} catch (ProvisionException e) {
 			Activator.getDefault().logErrorStatus(
 					"Provisioning exception while checking for updates", e);
+		}
+	}
+
+	private static void runCommand(String commandId, String errorMessage,
+			Event event) {
+		ICommandService commandService = (ICommandService) PlatformUI
+				.getWorkbench().getService(ICommandService.class);
+		Command command = commandService.getCommand(commandId);
+		if (!command.isDefined()) {
+			return;
+		}
+		IHandlerService handlerService = (IHandlerService) PlatformUI
+				.getWorkbench().getService(IHandlerService.class);
+		try {
+			handlerService.executeCommand(commandId, event);
+		} catch (ExecutionException e) {
+			Activator.getDefault().logErrorStatus(errorMessage, e);
+		} catch (NotDefinedException e) {
+			Activator.getDefault().logErrorStatus(errorMessage, e);
+		} catch (NotEnabledException e) {
+			Activator.getDefault().logErrorStatus(errorMessage, e);
+		} catch (NotHandledException e) {
+			Activator.getDefault().logErrorStatus(errorMessage, e);
 		}
 	}
 

@@ -8,11 +8,9 @@ Bundle-Vendor: University of Illinois
 Require-Bundle: org.eclipse.core.runtime,
  org.eclipse.ui,
  org.eclipse.equinox.p2.core,
- org.eclipse.equinox.p2.ui.sdk.scheduler,
  org.eclipse.equinox.p2.engine,
  org.eclipse.equinox.p2.metadata,
  org.eclipse.equinox.p2.operations,
- org.eclipse.equinox.p2.repository,
- org.eclipse.equinox.p2.ui
+ org.eclipse.equinox.p2.repository
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-ActivationPolicy: lazy
