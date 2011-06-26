@@ -5,7 +5,6 @@ package edu.illinois.bundleupdater;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Arrays;
 import java.util.Collection;
 
 import org.eclipse.core.commands.Command;
@@ -13,8 +12,10 @@ import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.core.commands.NotEnabledException;
 import org.eclipse.core.commands.NotHandledException;
 import org.eclipse.core.commands.common.NotDefinedException;
+import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.equinox.p2.core.IProvisioningAgent;
 import org.eclipse.equinox.p2.core.IProvisioningAgentProvider;
 import org.eclipse.equinox.p2.core.ProvisionException;
@@ -26,7 +27,6 @@ import org.eclipse.equinox.p2.operations.UpdateOperation;
 import org.eclipse.equinox.p2.query.IQuery;
 import org.eclipse.equinox.p2.query.QueryUtil;
 import org.eclipse.equinox.p2.repository.artifact.IArtifactRepositoryManager;
-import org.eclipse.equinox.p2.repository.metadata.IMetadataRepository;
 import org.eclipse.equinox.p2.repository.metadata.IMetadataRepositoryManager;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
@@ -39,11 +39,15 @@ import org.osgi.framework.ServiceReference;
 
 public class Updater implements IStartup {
 
-	private static final String UPDATE_SITE_URI = "file:<path to where the git repository is cloned>/BundleUpdater/edu.illinois.bundleupdater.updatesite/";
+	private static final String EXTENSION_POINT_ID = "edu.illinois.bundleupdater";
 
-	private URI getUpdateSiteURI() {
+	private static final String PLUGIN_ID_ATTRIBUTE_NAME = "plugin-id";
+
+	private static final String UPDATE_SITE_ATTRIBUTE_NAME = "update-site";
+
+	private URI getUpdateSiteURI(String updateSite) {
 		try {
-			return new URI(UPDATE_SITE_URI);
+			return new URI(updateSite);
 		} catch (URISyntaxException e) {
 			Activator.getDefault().logErrorStatus("Invalid update site URI", e);
 		}
@@ -52,6 +56,17 @@ public class Updater implements IStartup {
 
 	@Override
 	public void earlyStartup() {
+		IConfigurationElement[] config = Platform.getExtensionRegistry()
+				.getConfigurationElementsFor(EXTENSION_POINT_ID);
+
+		for (IConfigurationElement e : config) {
+			String updateSite = e.getAttribute(UPDATE_SITE_ATTRIBUTE_NAME);
+			String pluginID = e.getAttribute(PLUGIN_ID_ATTRIBUTE_NAME);
+			checkForUpdates(updateSite, pluginID);
+		}
+	}
+
+	private void checkForUpdates(String updateSite, String pluginID) {
 		BundleContext context = Activator.getContext();
 		ServiceReference serviceReference = context
 				.getServiceReference(IProvisioningAgentProvider.SERVICE_NAME);
@@ -68,36 +83,22 @@ public class Updater implements IStartup {
 			IArtifactRepositoryManager artifactRepositoryManager = (IArtifactRepositoryManager) agent
 					.getService(IArtifactRepositoryManager.SERVICE_NAME);
 
-			metadataRepositoryManager.addRepository(getUpdateSiteURI());
-			artifactRepositoryManager.addRepository(getUpdateSiteURI());
+			metadataRepositoryManager
+					.addRepository(getUpdateSiteURI(updateSite));
+			artifactRepositoryManager
+					.addRepository(getUpdateSiteURI(updateSite));
 
-			IMetadataRepository metadataRepository = metadataRepositoryManager
-					.loadRepository(getUpdateSiteURI(),
-							new NullProgressMonitor());
+			metadataRepositoryManager.loadRepository(
+					getUpdateSiteURI(updateSite), new NullProgressMonitor());
 
 			final IProfileRegistry registry = (IProfileRegistry) agent
 					.getService(IProfileRegistry.SERVICE_NAME);
 
-			System.err.println("profiles="
-					+ Arrays.toString(registry.getProfiles()));
-
 			final IProfile profile = registry.getProfile(IProfileRegistry.SELF);
 
-			System.out.println("self profile=" + profile);
-
-			Collection<IInstallableUnit> metadataIUs = metadataRepository
-					.query(QueryUtil.createLatestIUQuery(),
-							new NullProgressMonitor()).toUnmodifiableSet();
-
-			System.err.println("metadataIUs=" + metadataIUs);
-
-			IQuery<IInstallableUnit> query = QueryUtil
-					.createIUQuery(Activator.PLUGIN_ID
-							+ ".feature.feature.group");
+			IQuery<IInstallableUnit> query = QueryUtil.createIUQuery(pluginID);
 			Collection<IInstallableUnit> iusToUpdate = profile.query(query,
 					null).toUnmodifiableSet();
-
-			System.err.println("iusToUpdate=" + iusToUpdate);
 
 			ProvisioningSession provisioningSession = new ProvisioningSession(
 					agent);
@@ -108,15 +109,6 @@ public class Updater implements IStartup {
 			IStatus modalResolution = updateOperation
 					.resolveModal(new NullProgressMonitor());
 
-			Activator.getDefault().log(modalResolution);
-			System.err.println("modalResolution=" + modalResolution.toString());
-
-			boolean profileHasScheduledOperations = provisioningSession
-					.hasScheduledOperationsFor(profile.getProfileId());
-
-			System.out.println("Profile "
-					+ (profileHasScheduledOperations ? "has" : "does not have")
-					+ " scheduled operation jobs.");
 			if (modalResolution.isOK()) {
 				Display.getDefault().syncExec(new Runnable() {
 
