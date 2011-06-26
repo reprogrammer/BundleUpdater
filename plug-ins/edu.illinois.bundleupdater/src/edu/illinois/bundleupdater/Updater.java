@@ -39,11 +39,11 @@ import org.osgi.framework.ServiceReference;
 
 public class Updater implements IStartup {
 
-	private static final String EXTENSION_POINT_ID = "edu.illinois.bundleupdater";
+	private static final String EXTENSION_POINT_ID= "edu.illinois.bundleupdater";
 
-	private static final String PLUGIN_ID_ATTRIBUTE_NAME = "plugin-id";
+	private static final String PLUGIN_ID_ATTRIBUTE_NAME= "plugin-id";
 
-	private static final String UPDATE_SITE_ATTRIBUTE_NAME = "update-site";
+	private static final String UPDATE_SITE_ATTRIBUTE_NAME= "update-site";
 
 	private URI getUpdateSiteURI(String updateSite) {
 		try {
@@ -56,87 +56,68 @@ public class Updater implements IStartup {
 
 	@Override
 	public void earlyStartup() {
-		IConfigurationElement[] config = Platform.getExtensionRegistry()
-				.getConfigurationElementsFor(EXTENSION_POINT_ID);
+		IConfigurationElement[] config= Platform.getExtensionRegistry().getConfigurationElementsFor(EXTENSION_POINT_ID);
 
 		for (IConfigurationElement e : config) {
-			String updateSite = e.getAttribute(UPDATE_SITE_ATTRIBUTE_NAME);
-			String pluginID = e.getAttribute(PLUGIN_ID_ATTRIBUTE_NAME);
+			String updateSite= e.getAttribute(UPDATE_SITE_ATTRIBUTE_NAME);
+			String pluginID= e.getAttribute(PLUGIN_ID_ATTRIBUTE_NAME);
 			checkForUpdates(updateSite, pluginID);
 		}
 	}
 
 	private void checkForUpdates(String updateSite, String pluginID) {
-		BundleContext context = Activator.getContext();
-		ServiceReference serviceReference = context
-				.getServiceReference(IProvisioningAgentProvider.SERVICE_NAME);
+		BundleContext context= Activator.getContext();
+		ServiceReference serviceReference= context.getServiceReference(IProvisioningAgentProvider.SERVICE_NAME);
 		if (serviceReference == null)
 			return;
 
-		IProvisioningAgentProvider agentProvider = (IProvisioningAgentProvider) context
-				.getService(serviceReference);
+		IProvisioningAgentProvider agentProvider= (IProvisioningAgentProvider)context.getService(serviceReference);
 		try {
-			final IProvisioningAgent agent = agentProvider.createAgent(null);
+			final IProvisioningAgent agent= agentProvider.createAgent(null);
 
-			IMetadataRepositoryManager metadataRepositoryManager = (IMetadataRepositoryManager) agent
-					.getService(IMetadataRepositoryManager.SERVICE_NAME);
-			IArtifactRepositoryManager artifactRepositoryManager = (IArtifactRepositoryManager) agent
-					.getService(IArtifactRepositoryManager.SERVICE_NAME);
+			IMetadataRepositoryManager metadataRepositoryManager= (IMetadataRepositoryManager)agent.getService(IMetadataRepositoryManager.SERVICE_NAME);
+			IArtifactRepositoryManager artifactRepositoryManager= (IArtifactRepositoryManager)agent.getService(IArtifactRepositoryManager.SERVICE_NAME);
 
-			metadataRepositoryManager
-					.addRepository(getUpdateSiteURI(updateSite));
-			artifactRepositoryManager
-					.addRepository(getUpdateSiteURI(updateSite));
+			metadataRepositoryManager.addRepository(getUpdateSiteURI(updateSite));
+			artifactRepositoryManager.addRepository(getUpdateSiteURI(updateSite));
 
-			metadataRepositoryManager.loadRepository(
-					getUpdateSiteURI(updateSite), new NullProgressMonitor());
+			metadataRepositoryManager.loadRepository(getUpdateSiteURI(updateSite), new NullProgressMonitor());
 
-			final IProfileRegistry registry = (IProfileRegistry) agent
-					.getService(IProfileRegistry.SERVICE_NAME);
+			final IProfileRegistry registry= (IProfileRegistry)agent.getService(IProfileRegistry.SERVICE_NAME);
 
-			final IProfile profile = registry.getProfile(IProfileRegistry.SELF);
+			final IProfile profile= registry.getProfile(IProfileRegistry.SELF);
 
-			IQuery<IInstallableUnit> query = QueryUtil.createIUQuery(pluginID);
-			Collection<IInstallableUnit> iusToUpdate = profile.query(query,
-					null).toUnmodifiableSet();
+			IQuery<IInstallableUnit> query= QueryUtil.createIUQuery(pluginID);
+			Collection<IInstallableUnit> iusToUpdate= profile.query(query, null).toUnmodifiableSet();
 
-			ProvisioningSession provisioningSession = new ProvisioningSession(
-					agent);
+			ProvisioningSession provisioningSession= new ProvisioningSession(agent);
 
-			final UpdateOperation updateOperation = new UpdateOperation(
-					provisioningSession, iusToUpdate);
+			final UpdateOperation updateOperation= new UpdateOperation(provisioningSession, iusToUpdate);
 
-			IStatus modalResolution = updateOperation
-					.resolveModal(new NullProgressMonitor());
+			IStatus modalResolution= updateOperation.resolveModal(new NullProgressMonitor());
 
 			if (modalResolution.isOK()) {
 				Display.getDefault().syncExec(new Runnable() {
 
 					@Override
 					public void run() {
-						runCommand("org.eclipse.equinox.p2.ui.sdk.update",
-								"Failed to open the check for updates dialog",
-								null);
+						runCommand("org.eclipse.equinox.p2.ui.sdk.update", "Failed to open the check for updates dialog", null);
 					}
 				});
 
 			}
 		} catch (ProvisionException e) {
-			Activator.getDefault().logErrorStatus(
-					"Provisioning exception while checking for updates", e);
+			Activator.getDefault().logErrorStatus("Provisioning exception while checking for updates", e);
 		}
 	}
 
-	private static void runCommand(String commandId, String errorMessage,
-			Event event) {
-		ICommandService commandService = (ICommandService) PlatformUI
-				.getWorkbench().getService(ICommandService.class);
-		Command command = commandService.getCommand(commandId);
+	private static void runCommand(String commandId, String errorMessage, Event event) {
+		ICommandService commandService= (ICommandService)PlatformUI.getWorkbench().getService(ICommandService.class);
+		Command command= commandService.getCommand(commandId);
 		if (!command.isDefined()) {
 			return;
 		}
-		IHandlerService handlerService = (IHandlerService) PlatformUI
-				.getWorkbench().getService(IHandlerService.class);
+		IHandlerService handlerService= (IHandlerService)PlatformUI.getWorkbench().getService(IHandlerService.class);
 		try {
 			handlerService.executeCommand(commandId, event);
 		} catch (ExecutionException e) {

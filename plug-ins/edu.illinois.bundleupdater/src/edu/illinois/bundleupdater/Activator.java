@@ -10,7 +10,7 @@ import org.osgi.framework.BundleContext;
 
 public class Activator extends Plugin {
 
-	public static final String PLUGIN_ID = "edu.illinois.bundleupdater"; //$NON-NLS-1$
+	public static final String PLUGIN_ID= "edu.illinois.bundleupdater"; //$NON-NLS-1$
 
 	private static BundleContext context;
 
@@ -28,8 +28,8 @@ public class Activator extends Plugin {
 	 * )
 	 */
 	public void start(BundleContext bundleContext) throws Exception {
-		Activator.context = bundleContext;
-		plugin = this;
+		Activator.context= bundleContext;
+		plugin= this;
 	}
 
 	/*
@@ -39,8 +39,8 @@ public class Activator extends Plugin {
 	 * org.osgi.framework.BundleActivator#stop(org.osgi.framework.BundleContext)
 	 */
 	public void stop(BundleContext bundleContext) throws Exception {
-		Activator.context = null;
-		plugin = null;
+		Activator.context= null;
+		plugin= null;
 	}
 
 	public static Activator getDefault() {
