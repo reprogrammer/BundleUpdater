@@ -2,13 +2,10 @@
 <?eclipse version="3.4"?>
 <plugin>
    <extension
-         id="edu.illinois.bundleupdater.client"
-         name="edu.illinois.bundleupdater.client"
-         point="edu.illinois.bundleupdater">
-      <plugin-to-update
-            plugin-id="plugin-id"
-            update-site="update-site">
-      </plugin-to-update>
+         point="org.eclipse.ui.startup">
+      <startup
+            class="edu.illinois.bundleupdater.client.Startup">
+      </startup>
    </extension>
 
 </plugin>

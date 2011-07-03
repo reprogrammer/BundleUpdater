@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <site>
-   <feature url="features/edu.illinois.bundleupdater.feature_1.0.0.201106121953.jar" id="edu.illinois.bundleupdater.feature" version="1.0.0.201106121953">
+   <feature url="features/edu.illinois.bundleupdater.client.feature_1.0.0.201107022046.jar" id="edu.illinois.bundleupdater.client.feature" version="1.0.0.201107022046">
       <category name="Bundle Updater"/>
    </feature>
    <category-def name="Bundle Updater" label="Bundle Updater">

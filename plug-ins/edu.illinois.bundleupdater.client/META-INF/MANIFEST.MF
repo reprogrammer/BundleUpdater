@@ -6,6 +6,7 @@ Bundle-Version: 1.0.0.qualifier
 Bundle-Activator: edu.illinois.bundleupdater.client.Activator
 Bundle-Vendor: University of Illinois
 Require-Bundle: org.eclipse.core.runtime,
- edu.illinois.bundleupdater
+ edu.illinois.bundleupdater,
+ org.eclipse.ui
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-ActivationPolicy: lazy

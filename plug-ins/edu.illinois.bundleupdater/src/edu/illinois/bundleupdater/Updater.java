@@ -12,10 +12,8 @@ import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.core.commands.NotEnabledException;
 import org.eclipse.core.commands.NotHandledException;
 import org.eclipse.core.commands.common.NotDefinedException;
-import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.core.runtime.Platform;
 import org.eclipse.equinox.p2.core.IProvisioningAgent;
 import org.eclipse.equinox.p2.core.IProvisioningAgentProvider;
 import org.eclipse.equinox.p2.core.ProvisionException;
@@ -30,20 +28,22 @@ import org.eclipse.equinox.p2.repository.artifact.IArtifactRepositoryManager;
 import org.eclipse.equinox.p2.repository.metadata.IMetadataRepositoryManager;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
-import org.eclipse.ui.IStartup;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.commands.ICommandService;
 import org.eclipse.ui.handlers.IHandlerService;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
 
-public class Updater implements IStartup {
+public class Updater {
 
-	private static final String EXTENSION_POINT_ID= "edu.illinois.bundleupdater";
+	private String updateSite;
 
-	private static final String PLUGIN_ID_ATTRIBUTE_NAME= "plugin-id";
+	private String pluginID;
 
-	private static final String UPDATE_SITE_ATTRIBUTE_NAME= "update-site";
+	public Updater(String updateSite, String pluginID) {
+		this.updateSite= updateSite;
+		this.pluginID= pluginID;
+	}
 
 	private URI getUpdateSiteURI(String updateSite) {
 		try {
@@ -54,20 +54,9 @@ public class Updater implements IStartup {
 		return null;
 	}
 
-	@Override
-	public void earlyStartup() {
-		IConfigurationElement[] config= Platform.getExtensionRegistry().getConfigurationElementsFor(EXTENSION_POINT_ID);
-
-		for (IConfigurationElement e : config) {
-			String updateSite= e.getAttribute(UPDATE_SITE_ATTRIBUTE_NAME);
-			String pluginID= e.getAttribute(PLUGIN_ID_ATTRIBUTE_NAME);
-			checkForUpdates(updateSite, pluginID);
-		}
-	}
-
-	private void checkForUpdates(String updateSite, String pluginID) {
+	public void checkForUpdates() {
 		BundleContext context= Activator.getContext();
-		ServiceReference serviceReference= context.getServiceReference(IProvisioningAgentProvider.SERVICE_NAME);
+		ServiceReference<?> serviceReference= context.getServiceReference(IProvisioningAgentProvider.SERVICE_NAME);
 		if (serviceReference == null)
 			return;
 
