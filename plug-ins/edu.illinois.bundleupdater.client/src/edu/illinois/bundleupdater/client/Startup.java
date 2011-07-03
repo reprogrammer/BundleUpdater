@@ -5,13 +5,13 @@ package edu.illinois.bundleupdater.client;
 
 import org.eclipse.ui.IStartup;
 
-import edu.illinois.bundleupdater.Updater;
+import edu.illinois.bundleupdater.BundleUpdater;
 
 public class Startup implements IStartup {
 
 	@Override
 	public void earlyStartup() {
-		new Updater("updateSite", "pluginID").checkForUpdates();
+		new BundleUpdater("updateSite", "pluginID").checkForUpdates();
 	}
 
 }

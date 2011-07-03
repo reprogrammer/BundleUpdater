@@ -34,13 +34,13 @@ import org.eclipse.ui.handlers.IHandlerService;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
 
-public class Updater {
+public class BundleUpdater {
 
 	private String updateSite;
 
 	private String pluginID;
 
-	public Updater(String updateSite, String pluginID) {
+	public BundleUpdater(String updateSite, String pluginID) {
 		this.updateSite= updateSite;
 		this.pluginID= pluginID;
 	}
@@ -56,7 +56,7 @@ public class Updater {
 
 	public void checkForUpdates() {
 		BundleContext context= Activator.getContext();
-		ServiceReference<?> serviceReference= context.getServiceReference(IProvisioningAgentProvider.SERVICE_NAME);
+		ServiceReference serviceReference= context.getServiceReference(IProvisioningAgentProvider.SERVICE_NAME);
 		if (serviceReference == null)
 			return;
 
