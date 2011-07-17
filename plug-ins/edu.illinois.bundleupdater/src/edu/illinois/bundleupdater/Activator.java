@@ -3,22 +3,24 @@
  */
 package edu.illinois.bundleupdater;
 
+import org.eclipse.core.runtime.ILog;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Plugin;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.equinox.p2.core.IProvisioningAgentProvider;
+import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceReference;
 
-public class Activator extends Plugin {
+public class Activator implements BundleActivator {
 
 	public static final String PLUGIN_ID= "edu.illinois.bundleupdater"; //$NON-NLS-1$
 
-	private static BundleContext context;
-
 	private static Activator plugin;
 
-	static BundleContext getContext() {
-		return context;
-	}
+	private ServiceReference provisioningAgentProviderServiceReference;
+
+	private IProvisioningAgentProvider provisioningAgentProvider;
 
 	/*
 	 * (non-Javadoc)
@@ -28,7 +30,10 @@ public class Activator extends Plugin {
 	 * )
 	 */
 	public void start(BundleContext bundleContext) throws Exception {
-		Activator.context= bundleContext;
+		provisioningAgentProviderServiceReference= bundleContext.getServiceReference(IProvisioningAgentProvider.SERVICE_NAME);
+		if (provisioningAgentProviderServiceReference != null) {
+			provisioningAgentProvider= (IProvisioningAgentProvider)bundleContext.getService(provisioningAgentProviderServiceReference);
+		}
 		plugin= this;
 	}
 
@@ -39,12 +44,25 @@ public class Activator extends Plugin {
 	 * org.osgi.framework.BundleActivator#stop(org.osgi.framework.BundleContext)
 	 */
 	public void stop(BundleContext bundleContext) throws Exception {
-		Activator.context= null;
+		provisioningAgentProviderServiceReference= null;
+		provisioningAgentProvider= null;
 		plugin= null;
 	}
 
 	public static Activator getDefault() {
 		return plugin;
+	}
+
+	public ServiceReference getAgentProviderServiceReference() {
+		return provisioningAgentProviderServiceReference;
+	}
+
+	public IProvisioningAgentProvider getProvisioningAgentProvider() {
+		return provisioningAgentProvider;
+	}
+
+	private ILog getLog() {
+		return Platform.getLog(Platform.getBundle(PLUGIN_ID));
 	}
 
 	public void log(IStatus status) {

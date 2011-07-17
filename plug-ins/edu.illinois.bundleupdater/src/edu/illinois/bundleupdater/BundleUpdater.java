@@ -31,8 +31,6 @@ import org.eclipse.swt.widgets.Event;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.commands.ICommandService;
 import org.eclipse.ui.handlers.IHandlerService;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.ServiceReference;
 
 public class BundleUpdater {
 
@@ -55,17 +53,28 @@ public class BundleUpdater {
 	}
 
 	public void checkForUpdates() {
-		BundleContext context= Activator.getContext();
-		ServiceReference serviceReference= context.getServiceReference(IProvisioningAgentProvider.SERVICE_NAME);
-		if (serviceReference == null)
-			return;
-
-		IProvisioningAgentProvider agentProvider= (IProvisioningAgentProvider)context.getService(serviceReference);
 		try {
+			IProvisioningAgentProvider agentProvider= Activator.getDefault().getProvisioningAgentProvider();
+			if (agentProvider == null) {
+				Activator.getDefault().logErrorStatus("Could not find a provisioning agent provider.", new RuntimeException());
+				return;
+			}
+
 			final IProvisioningAgent agent= agentProvider.createAgent(null);
 
 			IMetadataRepositoryManager metadataRepositoryManager= (IMetadataRepositoryManager)agent.getService(IMetadataRepositoryManager.SERVICE_NAME);
+
+			if (metadataRepositoryManager == null) {
+				Activator.getDefault().logErrorStatus("Could not find the meta data repository manager.", new RuntimeException());
+				return;
+			}
+
 			IArtifactRepositoryManager artifactRepositoryManager= (IArtifactRepositoryManager)agent.getService(IArtifactRepositoryManager.SERVICE_NAME);
+
+			if (artifactRepositoryManager == null) {
+				Activator.getDefault().logErrorStatus("Could not find the artifact repository manager.", new RuntimeException());
+				return;
+			}
 
 			metadataRepositoryManager.addRepository(getUpdateSiteURI(updateSite));
 			artifactRepositoryManager.addRepository(getUpdateSiteURI(updateSite));
@@ -74,7 +83,17 @@ public class BundleUpdater {
 
 			final IProfileRegistry registry= (IProfileRegistry)agent.getService(IProfileRegistry.SERVICE_NAME);
 
+			if (registry == null) {
+				Activator.getDefault().logErrorStatus("Could not find the profile registry.", new RuntimeException());
+				return;
+			}
+
 			final IProfile profile= registry.getProfile(IProfileRegistry.SELF);
+
+			if (profile == null) {
+				Activator.getDefault().logErrorStatus("Could not find the profile.", new RuntimeException());
+				return;
+			}
 
 			IQuery<IInstallableUnit> query= QueryUtil.createIUQuery(pluginID);
 			Collection<IInstallableUnit> iusToUpdate= profile.query(query, null).toUnmodifiableSet();
@@ -90,13 +109,13 @@ public class BundleUpdater {
 
 					@Override
 					public void run() {
-						runCommand("org.eclipse.equinox.p2.ui.sdk.update", "Failed to open the check for updates dialog", null);
+						runCommand("org.eclipse.equinox.p2.ui.sdk.update", "Failed to open the check for updates dialog.", null);
 					}
 				});
 
 			}
 		} catch (ProvisionException e) {
-			Activator.getDefault().logErrorStatus("Provisioning exception while checking for updates", e);
+			Activator.getDefault().logErrorStatus("A provisioning exception occured while checking for updates.", e);
 		}
 	}
 
