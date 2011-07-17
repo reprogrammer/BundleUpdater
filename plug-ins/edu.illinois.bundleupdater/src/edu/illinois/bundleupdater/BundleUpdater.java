@@ -86,7 +86,7 @@ public class BundleUpdater {
 			IStatus modalResolution= updateOperation.resolveModal(new NullProgressMonitor());
 
 			if (modalResolution.isOK()) {
-				Display.getDefault().syncExec(new Runnable() {
+				Display.getDefault().asyncExec(new Runnable() {
 
 					@Override
 					public void run() {
